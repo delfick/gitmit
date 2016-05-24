@@ -143,10 +143,11 @@ class GitTimes(object):
         for key in use_files:
             if key.relpath:
                 path = getattr(key, "real_relpath", key.path)
+                relpath = getattr(key, "real_relpath", key.relpath)
                 if path in commit_times:
                     yield key.relpath, commit_times[path]
                 else:
-                    log.warning("Couldn't find commit time for {0}".format(key.real_relpath))
+                    log.warning("Couldn't find commit time for {0}".format(relpath))
 
     def extra_symlinked_files(self, potential_symlinks):
         """
