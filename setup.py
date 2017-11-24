@@ -27,7 +27,7 @@ setup(
       }
 
     # metadata for upload to PyPI
-    , url = "https://github.com/realestate-com-au/gitmit"
+    , url = "https://github.com/delfick/gitmit"
     , author = "Stephen Moore"
     , author_email = "delfick755@gmail.com"
     , description = "Python library to discover commit times of all files under a git repository"
