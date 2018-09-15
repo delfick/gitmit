@@ -31,6 +31,7 @@ setup(
     , author = "Stephen Moore"
     , author_email = "delfick755@gmail.com"
     , description = "Python library to discover commit times of all files under a git repository"
+    , license = "MIT"
     , keywords = "git,commit,mtime"
     )
 
