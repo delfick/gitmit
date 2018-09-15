@@ -72,7 +72,7 @@ Just use pip::
 Changelog
 ---------
 
-0.5 - TBD
+0.5 - 15 September 2018
   * Switch to dulwich over pygit2. This is because pygit2 is a pain to install.
     The downside is it is slower, but only by a few seconds.
 
