@@ -1,13 +1,20 @@
-sudo: true
+---
+
 language: python
+
 python:
   - "2.7"
   - "3.5"
   - "3.6"
-cache:
-  directories:
-    - $HOME/.pip-cache/
+
+env:
+  global:
+    - CI_SERVER=true
+
+install:
+  - pip install pip --upgrade
+  - pip install -e .
+  - pip install -e '.[tests]'
 
 script:
   - ./test.sh
-
