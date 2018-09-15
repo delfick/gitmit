@@ -65,6 +65,15 @@ Just use pip::
 
     $ pip install gitmit
 
+Changelog
+---------
+
+0.5 - TBD
+  * Switch to dulwich over pygit2. This is because pygit2 is a pain to install.
+    The downside is it is slower, but only by a few seconds.
+
+Before 0.5 no changelog was maintained
+
 Tests
 -----
 
