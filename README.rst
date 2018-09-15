@@ -40,8 +40,8 @@ debug
     Currently the only difference with debug is outputting the commits per second
     as we traverse the commits in the repository.
 
-Why
----
+Why/History
+-----------
 
 I needed this ability in my Docker client (http://harpoon.readthedocs.org) so
 that I could maintain the modified times of the files in the context sent to the
@@ -50,13 +50,17 @@ modified times of the files to the time of the clone).
 
 Originally I was shelling out to git log for every file. This was slow! I then
 moved to dulwich (python implementation of git) which was faster, but still
-slow. Finally I implemented it with pygit2 (libgit2 c bindings in python) and
+slow. Then I implemented it with pygit2 (libgit2 c bindings in python) and
 decided to make it a separate library.
 
 Unfortunately it's still not as fast as doing a ``git whatchanged --pretty=%at``
 and interpreting the results, but I rather a solution that uses libraries rather
 than interpreting text from the output of a program and the speed is not a
 problem for reasonably sized repositories.
+
+In September 2018 I moved back to using dulwich. This is because pygit2 is a bit
+of a pain because of how it pins to particular versions of libgit2, which itself
+can be annoying to get installed such that pygit2 can find it.
 
 Installation
 ------------
