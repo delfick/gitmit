@@ -64,14 +64,8 @@ class Repo(object):
         prefixes = PrefixTree()
         prefixes.fill(use_files_paths)
 
-        beginning = start = time.time()
-        commit_count = 0
-        cumalative_commit_count = 0
 
         for commit in self.git.walk(self.first_commit):
-            if debug:
-                commit_count += 1
-
             # Commit time taking into account the offset
             commit_time = commit.commit_time - (commit.commit_time_offset * 60)
 
@@ -95,14 +89,6 @@ class Repo(object):
             # Only yield if there was a difference
             if difference:
                 yield commit.oid, commit_time, difference
-
-            if debug and commit_count == 1000:
-                cumalative_commit_count += commit_count
-                log.debug("{0} commits ({1:.2f} per second)".format(cumalative_commit_count, commit_count / float(time.time() - start)))
-                if cumalative_commit_count % 100000 == 0:
-                    log.debug("{0:.2f} commits per second".format(cumalative_commit_count / float(time.time() - beginning)))
-                start = time.time()
-                commit_count = 0
 
             # If nothing remains, then break!
             if not prefixes:
