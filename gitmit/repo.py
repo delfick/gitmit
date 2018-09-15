@@ -16,11 +16,12 @@ and::
 """
 from gitmit.prefix_tree import PrefixTree
 
+from dulwich.repo import Repo as Repository
 from collections import defaultdict
-from pygit2 import Repository
 import logging
 import fnmatch
 import time
+import stat
 import os
 
 empty = frozenset()
@@ -43,12 +44,12 @@ class Repo(object):
 
     def all_files(self):
         """Return a set of all the files under git control"""
-        return set([entry.path for entry in self.git.index])
+        return set([entry.decode() for entry, _ in self.git.open_index().items()])
 
     @property
     def first_commit(self):
         """Return the oid of HEAD"""
-        return self.git.head.target
+        return self.git.head().decode()
 
     def file_commit_times(self, use_files_paths, debug=False):
         """
@@ -64,13 +65,16 @@ class Repo(object):
         prefixes = PrefixTree()
         prefixes.fill(use_files_paths)
 
-
-        for commit in self.git.walk(self.first_commit):
-            # Commit time taking into account the offset
-            commit_time = commit.commit_time - (commit.commit_time_offset * 60)
+        for entry in self.git.get_walker():
+            # Commit time taking into account the timezone
+            commit_time = entry.commit.commit_time - entry.commit.commit_timezone
 
             # Get us the two different tree structures between parents and current
-            cf_and_pf, changes = self.tree_structures_for((), commit.tree.oid, [p.tree.oid for p in commit.parents], prefixes)
+            cf_and_pf, changes = self.tree_structures_for(()
+                , entry.commit.tree
+                , [self.git.get_object(oid).tree for oid in entry.commit.parents]
+                , prefixes
+                )
 
             # Deep dive into any differences
             difference = []
@@ -88,7 +92,7 @@ class Repo(object):
 
             # Only yield if there was a difference
             if difference:
-                yield commit.oid, commit_time, difference
+                yield entry.commit.sha().hexdigest(), commit_time, difference
 
             # If nothing remains, then break!
             if not prefixes:
@@ -96,8 +100,9 @@ class Repo(object):
 
     def entries_in_tree_oid(self, prefix, tree_oid):
         """Find the tree at this oid and return entries prefixed with ``prefix``"""
-        tree = self.git.get(tree_oid, empty)
-        if tree is empty:
+        try:
+            tree = self.git.get_object(tree_oid)
+        except KeyError:
             log.warning("Couldn't find object {0}".format(tree_oid))
             return empty
         else:
@@ -109,13 +114,13 @@ class Repo(object):
 
         Where prefix is a tuple of the given prefix and the name of the entry.
         """
-        for entry in tree:
+        for entry in tree.items():
             if prefix:
-                new_prefix = prefix + (entry.name, )
+                new_prefix = prefix + (entry.path.decode(), )
             else:
-                new_prefix = (entry.name, )
+                new_prefix = (entry.path.decode(), )
 
-            yield (new_prefix, entry.type == "tree", entry.oid)
+            yield (new_prefix, stat.S_ISDIR(entry.mode), entry.sha)
 
     def tree_structures_for(self, prefix, current_oid, parent_oids, prefixes):
         """
@@ -169,4 +174,3 @@ class Repo(object):
                 cf_and_pf, changes = self.tree_structures_for(path, oid, parent_oids, prefixes)
                 if changes:
                     yield cf_and_pf, changes, False
-

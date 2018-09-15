@@ -106,61 +106,37 @@ describe TestCase, "Repo":
 
     describe "entries_in_tree_oid":
         it "returns empty if tree_oid not in git":
-            tree_oid = str(uuid.uuid1())
-            with mock.patch("gitmit.repo.Repository", mock.Mock(name="Repository")):
-                repo = Repo(str(uuid.uuid1()))
-            repo.git = {}
-            self.assertIs(repo.entries_in_tree_oid(str(uuid.uuid1()), tree_oid), empty)
+            with self.cloned_repo("paths") as (root_folder, commit_times):
+                repo = Repo(root_folder)
+                self.assertIs(repo.entries_in_tree_oid((), b"9fc25f91ffb9dc693f999a8983954c777f8cb2f6"), empty)
 
         it "gets entries_in_tree as a set if can find a tree":
-            tree = mock.Mock(name="tree")
-            prefix = mock.Mock(name="prefix")
-            tree_oid = mock.Mock(name="tree_oid")
+            with self.cloned_repo("paths") as (root_folder, commit_times):
+                repo = Repo(root_folder)
+                tree_oid = list(repo.git.get_walker())[0].commit.tree
+                self.assertEqual(repo.entries_in_tree_oid((), tree_oid)
+                    , frozenset(
+                        [ (('one',), False, b'3b5b7321662dac4ad026e1434206f19167fb119b')
+                        , (('six',), False, b'ffe2fce498955b628014618b28c6bcf152466a4a')
+                        , (('three',), True, b'dd53cbd0fe752a982d79710e0b801c08fb10bce9')
+                        , (('seven',), False, b'fe7900bcbd294970da3296db5cf2020b4391a639')
+                        , (('five',), False, b'1d19714ffbc272ba0da6eb419d66123c20527174')
+                        , (('two',), False, b'f719efd430d52bcfc8566a43b2eb655688d38871')
+                        ]
+                      )
+                    )
 
-            with mock.patch("gitmit.repo.Repository", mock.Mock(name="Repository")):
-                repo = Repo(str(uuid.uuid1()))
-
-            repo.git = {tree_oid: tree}
-            e1, e2 = mock.Mock(name="e1"), mock.Mock(name="e2")
-            fake_entries_in_tree = mock.Mock(name="entries_in_tree", return_value=[e1, e2])
-
-            with mock.patch.multiple(repo, entries_in_tree=fake_entries_in_tree):
-                self.assertEqual(repo.entries_in_tree_oid(prefix, tree_oid), set([e1, e2]))
-
-            fake_entries_in_tree.assert_called_once_with(prefix, tree)
-
-    describe "entries_in_tree":
-        it "yields new_prefix as just the name if no prefix":
-            oid = str(uuid.uuid1())
-            name = str(uuid.uuid1())
-            tree = [Entry(name, "blob", oid)]
-
-            with mock.patch("gitmit.repo.Repository", mock.Mock(name="Repository")):
-                repo = Repo("root_folder")
-
-            self.assertEqual(list(repo.entries_in_tree((), tree)), [((name, ), False, oid)])
-
-        it "yields new_prefix as combination of prefix and name if there is a prefix":
-            oid = str(uuid.uuid1())
-            name = str(uuid.uuid1())
-            tree = [Entry(name, "blob", oid)]
-            prefix_part = str(uuid.uuid1())
-
-            with mock.patch("gitmit.repo.Repository", mock.Mock(name="Repository")):
-                repo = Repo("root_folder")
-
-            self.assertEqual(list(repo.entries_in_tree((prefix_part, ), tree)), [((prefix_part, name, ), False, oid)])
-
-        it "yields is_tree as True if type is tree":
-            oid = str(uuid.uuid1())
-            name = str(uuid.uuid1())
-            tree = [Entry(name, "tree", oid)]
-            prefix_part = str(uuid.uuid1())
-
-            with mock.patch("gitmit.repo.Repository", mock.Mock(name="Repository")):
-                repo = Repo("root_folder")
-
-            self.assertEqual(list(repo.entries_in_tree((prefix_part, ), tree)), [((prefix_part, name, ), True, oid)])
+                self.assertEqual(repo.entries_in_tree_oid(("prefix", "blah"), tree_oid)
+                    , frozenset(
+                        [ (('prefix', 'blah', 'one',), False, b'3b5b7321662dac4ad026e1434206f19167fb119b')
+                        , (('prefix', 'blah', 'six',), False, b'ffe2fce498955b628014618b28c6bcf152466a4a')
+                        , (('prefix', 'blah', 'three',), True, b'dd53cbd0fe752a982d79710e0b801c08fb10bce9')
+                        , (('prefix', 'blah', 'seven',), False, b'fe7900bcbd294970da3296db5cf2020b4391a639')
+                        , (('prefix', 'blah', 'five',), False, b'1d19714ffbc272ba0da6eb419d66123c20527174')
+                        , (('prefix', 'blah', 'two',), False, b'f719efd430d52bcfc8566a43b2eb655688d38871')
+                        ]
+                      )
+                    )
 
     describe "tree_structures_for":
         it "returns empty and empty if prefix not in prefixes":

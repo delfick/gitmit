@@ -8,7 +8,7 @@ setup(
     , include_package_data = True
 
     , install_requires =
-      [ "pygit2==0.26.1"
+      [ "dulwich==0.19.6"
       ]
 
     , extras_require =
