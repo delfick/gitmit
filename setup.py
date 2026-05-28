@@ -8,7 +8,7 @@ setup(
     , include_package_data = True
 
     , install_requires =
-      [ "dulwich==0.19.6"
+      [ "dulwich==1.2.5"
       ]
 
     , extras_require =
